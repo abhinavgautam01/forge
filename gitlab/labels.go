@@ -87,8 +87,13 @@ func (s *gitLabLabelService) Create(ctx context.Context, owner, repo string, opt
 
 	l, resp, err := s.client.Labels.CreateLabel(pid, glOpts)
 	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return nil, forge.ErrNotFound
+		if resp != nil {
+			switch resp.StatusCode {
+			case http.StatusNotFound:
+				return nil, forge.ErrNotFound
+			case http.StatusConflict:
+				return nil, forge.ErrLabelExists
+			}
 		}
 		return nil, err
 	}
@@ -139,4 +144,8 @@ func (s *gitLabLabelService) Delete(ctx context.Context, owner, repo, name strin
 		return err
 	}
 	return nil
+}
+
+func (s *gitLabLabelService) ListURL(repoHTMLURL string) string {
+	return repoHTMLURL + "/-/labels"
 }

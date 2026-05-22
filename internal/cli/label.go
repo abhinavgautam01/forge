@@ -1,10 +1,11 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/git-pkgs/forge"
+	forges "github.com/git-pkgs/forge"
 	"github.com/git-pkgs/forge/internal/output"
 	"github.com/git-pkgs/forge/internal/resolve"
 	"github.com/spf13/cobra"
@@ -26,22 +27,34 @@ func init() {
 }
 
 func labelListCmd() *cobra.Command {
-	var flagLimit int
+	var (
+		flagLimit int
+		flagWeb   bool
+	)
 
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List labels",
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List labels",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			forge, owner, repoName, _, err := resolve.Repo(flagRepo, flagForgeType)
+			f, owner, repoName, _, err := resolve.Repo(flagRepo, flagForgeType)
 			if err != nil {
 				return err
+			}
+
+			if flagWeb {
+				repo, err := f.Repos().Get(cmd.Context(), owner, repoName)
+				if err != nil {
+					return fmt.Errorf("getting repository: %w", err)
+				}
+				return openBrowser(f.Labels().ListURL(repo.HTMLURL))
 			}
 
 			opts := forges.ListLabelOpts{
 				Limit: flagLimit,
 			}
 
-			labels, err := forge.Labels().List(cmd.Context(), owner, repoName, opts)
+			labels, err := f.Labels().List(cmd.Context(), owner, repoName, opts)
 			if err != nil {
 				return notSupported(err, "labels")
 			}
@@ -75,6 +88,7 @@ func labelListCmd() *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 0, "Maximum number of labels")
+	cmd.Flags().BoolVarP(&flagWeb, "web", "w", false, "Open in browser")
 	return cmd
 }
 
@@ -83,30 +97,50 @@ func labelCreateCmd() *cobra.Command {
 		flagName        string
 		flagColor       string
 		flagDescription string
+		flagForce       bool
 	)
 
 	cmd := &cobra.Command{
-		Use:   "create",
+		Use:   "create [name]",
 		Short: "Create a label",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if flagName == "" {
-				return fmt.Errorf("--name is required")
+			name := flagName
+			if len(args) > 0 {
+				name = args[0]
+			}
+			if name == "" {
+				return fmt.Errorf("label name is required (provide as argument or --name)")
 			}
 
-			forge, owner, repoName, _, err := resolve.Repo(flagRepo, flagForgeType)
+			f, owner, repoName, _, err := resolve.Repo(flagRepo, flagForgeType)
 			if err != nil {
 				return err
 			}
 
 			opts := forges.CreateLabelOpts{
-				Name:        flagName,
+				Name:        name,
 				Color:       flagColor,
 				Description: flagDescription,
 			}
 
-			label, err := forge.Labels().Create(cmd.Context(), owner, repoName, opts)
+			label, err := f.Labels().Create(cmd.Context(), owner, repoName, opts)
 			if err != nil {
-				return notSupported(err, "labels")
+				if flagForce && errors.Is(err, forges.ErrLabelExists) {
+					updateOpts := forges.UpdateLabelOpts{}
+					if flagColor != "" {
+						updateOpts.Color = &flagColor
+					}
+					if flagDescription != "" {
+						updateOpts.Description = &flagDescription
+					}
+					label, err = f.Labels().Update(cmd.Context(), owner, repoName, name, updateOpts)
+					if err != nil {
+						return notSupported(err, "labels")
+					}
+				} else {
+					return notSupported(err, "labels")
+				}
 			}
 
 			p := printer()
@@ -119,9 +153,10 @@ func labelCreateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flagName, "name", "n", "", "Label name")
+	cmd.Flags().StringVarP(&flagName, "name", "n", "", "Label name (can also be provided as first argument)")
 	cmd.Flags().StringVarP(&flagColor, "color", "c", "", "Label color (hex without #)")
 	cmd.Flags().StringVarP(&flagDescription, "description", "d", "", "Label description")
+	cmd.Flags().BoolVarP(&flagForce, "force", "f", false, "Update the label if it already exists")
 	return cmd
 }
 
