@@ -11,6 +11,7 @@ import (
 
 	"github.com/git-pkgs/forge"
 	"github.com/git-pkgs/forge/bitbucket"
+	"github.com/git-pkgs/forge/gerrit"
 	"github.com/git-pkgs/forge/gitea"
 	ghforge "github.com/git-pkgs/forge/github"
 	glforge "github.com/git-pkgs/forge/gitlab"
@@ -85,6 +86,7 @@ var builders = forges.ForgeBuilders{
 	GitHub: ghforge.NewWithBase,
 	GitLab: glforge.New,
 	Gitea:  gitea.New,
+	Gerrit: gerrit.New,
 }
 
 // Repo figures out the forge, owner, and repo name from flags or the current
@@ -251,6 +253,8 @@ func forgeForType(forgeType, baseURL, token string, hc *http.Client) forges.Forg
 		return glforge.New(baseURL, token, hc)
 	case "github":
 		return ghforge.NewWithBase(baseURL, token, hc)
+	case "gerrit":
+		return gerrit.New(baseURL, token, hc)
 	}
 	return nil
 }
@@ -323,6 +327,10 @@ func TokenForDomainEnv(domain string) string {
 		if t := os.Getenv("BITBUCKET_TOKEN"); t != "" {
 			return t
 		}
+	case "gerrit-review.googlesource.com":
+		if t := os.Getenv("GERRIT_TOKEN"); t != "" {
+			return t
+		}
 	}
 
 	// FORGE_TOKEN is a fallback for any domain without a specific token.
@@ -367,6 +375,8 @@ func defaultDomainForType(forgeType string) string {
 		return "codeberg.org"
 	case "bitbucket":
 		return "bitbucket.org"
+	case "gerrit":
+		return "gerrit-review.googlesource.com"
 	default:
 		return "github.com"
 	}

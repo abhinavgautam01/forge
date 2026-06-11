@@ -322,6 +322,30 @@ func TestDetectForgeTypeGitHubAPI(t *testing.T) {
 	}
 }
 
+func TestDetectForgeTypeGerritAPI(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/version", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+	mux.HandleFunc("GET /api/v4/version", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+	mux.HandleFunc("GET /config/server/version", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprintf(w, ")]}'\n\"3.9.0\"")
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	ft, err := detectFromAPI(context.Background(), http.DefaultClient, srv.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ft != Gerrit {
+		t.Errorf("want Gerrit, got %s", ft)
+	}
+}
+
 func TestClientListRepositoriesRoutes(t *testing.T) {
 	mock := &mockForge{
 		repoService: &mockRepoService{

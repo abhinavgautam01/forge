@@ -141,6 +141,8 @@ func (c *Client) RegisterDomain(ctx context.Context, domain, token string, build
 		c.forges[domain] = builders.GitLab(baseURL, token, c.httpClient)
 	case Gitea, Forgejo:
 		c.forges[domain] = builders.Gitea(baseURL, token, c.httpClient)
+	case Gerrit:
+		c.forges[domain] = builders.Gerrit(baseURL, token, c.httpClient)
 	default:
 		return fmt.Errorf("unsupported forge type %q for %s", ft, domain)
 	}
@@ -153,6 +155,7 @@ type ForgeBuilders struct {
 	GitHub func(baseURL, token string, hc *http.Client) Forge
 	GitLab func(baseURL, token string, hc *http.Client) Forge
 	Gitea  func(baseURL, token string, hc *http.Client) Forge
+	Gerrit func(baseURL, token string, hc *http.Client) Forge
 }
 
 func (c *Client) forgeFor(domain string) (Forge, error) {

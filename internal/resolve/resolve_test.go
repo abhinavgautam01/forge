@@ -60,7 +60,7 @@ func clearTokenEnv(t *testing.T) {
 	for _, v := range []string{
 		"GITHUB_TOKEN", "GH_TOKEN",
 		"GITLAB_TOKEN", "GLAB_TOKEN",
-		"FORGEJO_TOKEN", "GITEA_TOKEN", "BITBUCKET_TOKEN",
+		"FORGEJO_TOKEN", "GITEA_TOKEN", "BITBUCKET_TOKEN", "GERRIT_TOKEN",
 		"FORGE_TOKEN",
 	} {
 		t.Setenv(v, "")
@@ -129,6 +129,14 @@ func TestTokenForDomain(t *testing.T) {
 	}
 	t.Setenv("FORGEJO_TOKEN", "")
 	t.Setenv("GITEA_TOKEN", "")
+
+	// Gerrit
+	t.Setenv("GERRIT_TOKEN", "gerrit-tok")
+	got = TokenForDomain("gerrit-review.googlesource.com")
+	if got != "gerrit-tok" {
+		t.Errorf("expected gerrit-tok, got %q", got)
+	}
+	t.Setenv("GERRIT_TOKEN", "")
 }
 
 func TestTokenForDomainEnvSpecificOverridesFallback(t *testing.T) {
@@ -175,6 +183,7 @@ func TestDomain(t *testing.T) {
 		{"gitea", "codeberg.org"},
 		{"forgejo", "codeberg.org"},
 		{"bitbucket", "bitbucket.org"},
+		{"gerrit", "gerrit-review.googlesource.com"},
 		{"unknown", "github.com"},
 	}
 

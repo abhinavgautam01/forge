@@ -1,6 +1,6 @@
 # forge
 
-Go library and CLI for working with git forges. Supports GitHub, GitLab, Gitea/Forgejo, and Bitbucket Cloud through a single interface.
+Go library and CLI for working with git forges. Supports GitHub, GitLab, Gitea/Forgejo, Bitbucket Cloud, and Gerrit through a single interface.
 
 ## CLI
 
@@ -42,11 +42,12 @@ Store tokens with `forge auth login`:
 forge auth login                          # interactive: asks domain + token
 forge auth login --domain github.com --token ghp_abc123
 forge auth login --domain gitea.example.com --token abc123 --type gitea
+forge auth login --domain gerrit.example.com --token user:http_password --type gerrit
 ```
 
 Check what's configured with `forge auth status`.
 
-Tokens are resolved in this order: CLI flags, environment variables (`FORGE_TOKEN`, `GITHUB_TOKEN`/`GH_TOKEN`, `GITLAB_TOKEN`, `FORGEJO_TOKEN`/`GITEA_TOKEN`, `BITBUCKET_TOKEN`), then the config file at `~/.config/forge/config`. The target host is inferred from the current directory's git remote; use `--host` or `FORGE_HOST` to override it (for example `forge --host gitea.com repo list someone`).
+Tokens are resolved in this order: CLI flags, environment variables (`FORGE_TOKEN`, `GITHUB_TOKEN`/`GH_TOKEN`, `GITLAB_TOKEN`, `FORGEJO_TOKEN`/`GITEA_TOKEN`, `BITBUCKET_TOKEN`, `GERRIT_TOKEN` for `gerrit-review.googlesource.com`), then the config file at `~/.config/forge/config`. The target host is inferred from the current directory's git remote; use `--host` or `FORGE_HOST` to override it (for example `forge --host gitea.com repo list someone`).
 
 ### Configuration
 
@@ -64,6 +65,10 @@ token = ghp_abc123
 [gitea.example.com]
 type = gitea
 token = abc123
+
+[gerrit.example.com]
+type = gerrit
+token = user:http_password
 ```
 
 `.forge` in the repo root is for per-project settings, committed to the repo, no tokens:
