@@ -89,8 +89,12 @@ func statusSetCmd() *cobra.Command {
 				return err
 			}
 
+			state := string(forges.NormalizeCommitStatusState(flagState))
+			if state == string(forges.CommitStatusUnknown) {
+				state = flagState
+			}
 			opts := forges.SetCommitStatusOpts{
-				State:       forges.CommitStatusState(flagState),
+				State:       state,
 				Context:     flagContext,
 				Description: flagDescription,
 				TargetURL:   flagURL,

@@ -77,9 +77,9 @@ const (
 // NormalizeIssueState maps forge-specific issue states to common states.
 func NormalizeIssueState(state string) IssueState {
 	switch normalizeToken(state) {
-	case "open", "opened", "new", "reopened":
+	case "open", "opened", "new", "reopened", "on_hold":
 		return IssueStateOpen
-	case "closed", "resolved", "declined", "rejected", "done":
+	case "closed", "resolved", "declined", "rejected", "done", "invalid", "duplicate", "wontfix":
 		return IssueStateClosed
 	default:
 		return IssueStateUnknown
@@ -173,11 +173,11 @@ func NormalizeAccessLevel(permission string) AccessLevel {
 	switch normalizeToken(permission) {
 	case "", "none", "no_access":
 		return AccessLevelNone
-	case "read", "pull", "guest", "reporter":
+	case "read", "pull", "guest", "reporter", "triage", "planner":
 		return AccessLevelRead
 	case "write", "push", "developer":
 		return AccessLevelWrite
-	case "admin", "owner", "maintainer":
+	case "admin", "owner", "maintainer", "maintain":
 		return AccessLevelAdmin
 	default:
 		return AccessLevelUnknown

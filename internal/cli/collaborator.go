@@ -88,7 +88,7 @@ func collaboratorAddCmd() *cobra.Command {
 			}
 
 			opts := forges.AddCollaboratorOpts{
-				Permission: forges.AccessLevel(flagPermission),
+				Permission: forges.NormalizeAccessLevel(flagPermission),
 			}
 
 			if err := forge.Collaborators().Add(cmd.Context(), owner, repoName, username, opts); err != nil {

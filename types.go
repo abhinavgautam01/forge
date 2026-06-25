@@ -658,7 +658,7 @@ type CommitStatus struct {
 
 // SetCommitStatusOpts holds options for creating a commit status.
 type SetCommitStatusOpts struct {
-	State       CommitStatusState
+	State       string // forge-native on write
 	Context     string // e.g. "my-check"
 	Description string
 	TargetURL   string

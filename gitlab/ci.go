@@ -18,12 +18,16 @@ func (f *gitLabForge) CI() forge.CIService {
 }
 
 func convertGitLabPipeline(p *gitlab.PipelineInfo) forge.CIRun {
+	status := forge.NormalizeCIStatus(p.Status)
 	result := forge.CIRun{
 		ID:      int64(p.ID),
-		Status:  forge.NormalizeCIStatus(p.Status),
+		Status:  status,
 		Branch:  p.Ref,
 		SHA:     p.SHA,
 		HTMLURL: p.WebURL,
+	}
+	if status == forge.CIStatusSuccess || status == forge.CIStatusFailed || status == forge.CIStatusCancelled || status == forge.CIStatusSkipped {
+		result.Conclusion = forge.NormalizeCIConclusion(p.Status)
 	}
 	if p.CreatedAt != nil {
 		result.CreatedAt = *p.CreatedAt
@@ -35,12 +39,16 @@ func convertGitLabPipeline(p *gitlab.PipelineInfo) forge.CIRun {
 }
 
 func convertGitLabPipelineDetail(p *gitlab.Pipeline) forge.CIRun {
+	status := forge.NormalizeCIStatus(p.Status)
 	result := forge.CIRun{
 		ID:      int64(p.ID),
-		Status:  forge.NormalizeCIStatus(p.Status),
+		Status:  status,
 		Branch:  p.Ref,
 		SHA:     p.SHA,
 		HTMLURL: p.WebURL,
+	}
+	if status == forge.CIStatusSuccess || status == forge.CIStatusFailed || status == forge.CIStatusCancelled || status == forge.CIStatusSkipped {
+		result.Conclusion = forge.NormalizeCIConclusion(p.Status)
 	}
 	if p.User != nil {
 		result.Author = forge.User{
@@ -129,6 +137,9 @@ func (s *gitLabCIService) GetRun(ctx context.Context, owner, repo string, runID 
 				Name:    j.Name,
 				Status:  forge.NormalizeCIStatus(j.Status),
 				HTMLURL: j.WebURL,
+			}
+			if job.Status == forge.CIStatusSuccess || job.Status == forge.CIStatusFailed || job.Status == forge.CIStatusCancelled || job.Status == forge.CIStatusSkipped {
+				job.Conclusion = forge.NormalizeCIConclusion(j.Status)
 			}
 			if j.StartedAt != nil {
 				job.StartedAt = j.StartedAt
