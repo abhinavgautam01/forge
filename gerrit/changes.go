@@ -158,8 +158,8 @@ func (s *gerritPRService) List(ctx context.Context, owner, repo string, opts for
 	for {
 		query := url.Values{}
 		query.Set("q", s.query(owner, repo, opts))
-		query.Set("n", intString(perPage))
-		query.Set("S", intString(start))
+		query.Set("n", strconv.Itoa(perPage))
+		query.Set("S", strconv.Itoa(start))
 		query.Add("o", "DETAILED_ACCOUNTS")
 		query.Add("o", "CURRENT_REVISION")
 
@@ -216,21 +216,15 @@ func (s *gerritPRService) Update(_ context.Context, _, _ string, _ int, _ forge.
 }
 
 func (s *gerritPRService) Close(ctx context.Context, owner, repo string, number int) error {
-	body := map[string]string{"message": "Abandoned by forge"}
-	return s.forge.doJSON(ctx, http.MethodPost, "/changes/"+encodeID(strconv.Itoa(number))+"/abandon", nil, body, nil)
+	return s.forge.doJSON(ctx, http.MethodPost, "/changes/"+encodeID(strconv.Itoa(number))+"/abandon", nil, nil, nil)
 }
 
 func (s *gerritPRService) Reopen(ctx context.Context, owner, repo string, number int) error {
-	body := map[string]string{"message": "Restored by forge"}
-	return s.forge.doJSON(ctx, http.MethodPost, "/changes/"+encodeID(strconv.Itoa(number))+"/restore", nil, body, nil)
+	return s.forge.doJSON(ctx, http.MethodPost, "/changes/"+encodeID(strconv.Itoa(number))+"/restore", nil, nil, nil)
 }
 
 func (s *gerritPRService) Merge(ctx context.Context, owner, repo string, number int, opts forge.MergePROpts) error {
-	body := map[string]string{}
-	if opts.Message != "" {
-		body["message"] = opts.Message
-	}
-	return s.forge.doJSON(ctx, http.MethodPost, "/changes/"+encodeID(strconv.Itoa(number))+"/submit", nil, body, nil)
+	return s.forge.doJSON(ctx, http.MethodPost, "/changes/"+encodeID(strconv.Itoa(number))+"/submit", nil, nil, nil)
 }
 
 func (s *gerritPRService) Diff(ctx context.Context, owner, repo string, number int) (string, error) {

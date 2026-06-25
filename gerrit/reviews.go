@@ -31,12 +31,12 @@ func (s *gerritReviewService) Submit(ctx context.Context, owner, repo string, nu
 	if opts.Body != "" {
 		body["message"] = opts.Body
 	}
-	labels := map[string]string{}
+	labels := map[string]int{}
 	switch state {
 	case forge.ReviewApproved:
-		labels["Code-Review"] = "+2"
+		labels["Code-Review"] = 2
 	case forge.ReviewChangesRequested:
-		labels["Code-Review"] = "-2"
+		labels["Code-Review"] = -2
 	case forge.ReviewCommented:
 	default:
 		return nil, forge.ErrNotSupported

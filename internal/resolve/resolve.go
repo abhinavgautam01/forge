@@ -327,10 +327,6 @@ func TokenForDomainEnv(domain string) string {
 		if t := os.Getenv("BITBUCKET_TOKEN"); t != "" {
 			return t
 		}
-	case "gerrit-review.googlesource.com":
-		if t := os.Getenv("GERRIT_TOKEN"); t != "" {
-			return t
-		}
 	}
 
 	// FORGE_TOKEN is a fallback for any domain without a specific token.
@@ -375,8 +371,6 @@ func defaultDomainForType(forgeType string) string {
 		return "codeberg.org"
 	case "bitbucket":
 		return "bitbucket.org"
-	case "gerrit":
-		return "gerrit-review.googlesource.com"
 	default:
 		return "github.com"
 	}

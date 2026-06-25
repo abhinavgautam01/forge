@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"path"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -228,6 +227,4 @@ func sortedMapKeys[T any](m map[string]T) []string {
 	return keys
 }
 
-func intString(n int) string {
-	return strconv.Itoa(n)
-}
+

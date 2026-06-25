@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	forge "github.com/git-pkgs/forge"
@@ -32,7 +33,9 @@ func (s *gerritRepoService) convertProject(p gerritProjectInfo) forge.Repository
 	if name == "" {
 		name = p.ID
 	}
-	name = strings.ReplaceAll(name, "%2F", "/")
+	if unescaped, err := url.PathUnescape(name); err == nil {
+		name = unescaped
+	}
 	owner, repo := splitProjectName(name)
 
 	result := forge.Repository{
@@ -40,7 +43,7 @@ func (s *gerritRepoService) convertProject(p gerritProjectInfo) forge.Repository
 		Owner:               owner,
 		Name:                repo,
 		Description:         p.Description,
-		HTMLURL:             s.forge.baseURL + "/admin/repos/" + encodeID(name),
+		HTMLURL:             s.forge.baseURL + "/" + name,
 		CloneURL:            s.forge.baseURL + "/" + name,
 		DefaultBranch:       trimRefPrefix(p.Branches["HEAD"]),
 		Archived:            p.State == "READ_ONLY",
@@ -90,8 +93,8 @@ func (s *gerritRepoService) List(ctx context.Context, owner string, opts forge.L
 	for {
 		query := url.Values{}
 		query.Set("d", "")
-		query.Set("n", intString(perPage))
-		query.Set("S", intString(start))
+		query.Set("n", strconv.Itoa(perPage))
+		query.Set("S", strconv.Itoa(start))
 		if owner != "" {
 			query.Set("p", owner+"/")
 		}
@@ -215,8 +218,8 @@ func (s *gerritRepoService) Search(ctx context.Context, opts forge.SearchRepoOpt
 	for {
 		query := url.Values{}
 		query.Set("query", opts.Query)
-		query.Set("limit", intString(perPage))
-		query.Set("start", intString(start))
+		query.Set("limit", strconv.Itoa(perPage))
+		query.Set("start", strconv.Itoa(start))
 
 		var page []gerritProjectInfo
 		if err := s.forge.doJSON(ctx, http.MethodGet, "/projects/", query, nil, &page); err != nil {
