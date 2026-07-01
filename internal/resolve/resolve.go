@@ -317,7 +317,11 @@ func TokenForDomain(domain string) string {
 	if err != nil || cfg == nil {
 		return ""
 	}
-	return cfg.Domains[domain].Token
+	token, err := cfg.Domains[domain].ResolveToken(domain)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "forge: token command for %s failed: %v\n", domain, err)
+	}
+	return token
 }
 
 // TokenForDomainEnv looks up a token from environment variables only.
