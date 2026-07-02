@@ -314,6 +314,19 @@ func TestForgeTypeOverrideSkipsDetection(t *testing.T) {
 	}
 }
 
+func TestForgeForDomainRequiresDomain(t *testing.T) {
+	_, err := ForgeForDomain("")
+	if err == nil {
+		t.Fatal("expected error for empty domain")
+	}
+	if !strings.Contains(err.Error(), "domain is required") {
+		t.Fatalf("error = %v, want domain-focused message", err)
+	}
+	if strings.Contains(err.Error(), "forge type") {
+		t.Fatalf("error should not mention forge type: %v", err)
+	}
+}
+
 func TestSetForgeType(t *testing.T) {
 	old := forgeTypeOverride
 	defer func() { forgeTypeOverride = old }()

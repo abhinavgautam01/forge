@@ -370,7 +370,7 @@ func TokenForDomainEnv(domain string) string {
 // If the domain isn't a known forge, it checks config then probes the server.
 func ForgeForDomain(domain string) (forges.Forge, error) {
 	if domain == "" {
-		return nil, fmt.Errorf("domain is required for this forge type")
+		return nil, fmt.Errorf("domain is required")
 	}
 	client := newClient(domain)
 	return forgeForDomainMaybeConfig(context.Background(), client, domain)

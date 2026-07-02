@@ -189,6 +189,26 @@ func TestPullRequestGetAndDiff(t *testing.T) {
 	}
 }
 
+func TestPullRequestGetRejectsDifferentProject(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /changes/42/detail", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprint(w, xssi+`{
+			"project":"other/repo",
+			"branch":"main",
+			"subject":"Wrong project",
+			"status":"NEW",
+			"_number":42
+		}`)
+	})
+	f, done := newTestForge(mux)
+	defer done()
+
+	_, err := f.PullRequests().Get(context.Background(), "org", "repo", 42)
+	if !errors.Is(err, forge.ErrNotFound) {
+		t.Fatalf("Get error = %v, want ErrNotFound", err)
+	}
+}
+
 func TestPullRequestListBuildsGerritQuery(t *testing.T) {
 	mux := http.NewServeMux()
 	requests := 0

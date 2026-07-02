@@ -140,6 +140,9 @@ func (s *gerritPRService) Get(ctx context.Context, owner, repo string, number in
 	if err := s.forge.doJSON(ctx, http.MethodGet, "/changes/"+encodeID(strconv.Itoa(number))+"/detail", query, nil, &c); err != nil {
 		return nil, err
 	}
+	if c.Project != projectName(owner, repo) {
+		return nil, forge.ErrNotFound
+	}
 	result := s.convertChange(c)
 	return &result, nil
 }
