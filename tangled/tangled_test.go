@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	forges "github.com/git-pkgs/forge"
@@ -29,6 +30,54 @@ func TestRepoGetUsesAppviewMetadataAndBranches(t *testing.T) {
 	}
 	if repo.DefaultBranch != "master" {
 		t.Errorf("DefaultBranch = %q", repo.DefaultBranch)
+	}
+}
+
+func TestRepoGetReusesMetadataDIDForDefaultBranch(t *testing.T) {
+	var metadataRequests int
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /tangled.org/core", func(w http.ResponseWriter, r *http.Request) {
+		metadataRequests++
+		_, _ = fmt.Fprintf(w, `<meta name="vcs:clone" content="%s/tangled.org/core">
+<body data-star-subject-at="at://did:plc:owner/sh.tangled.repo/core"></body>`, "http://"+r.Host)
+	})
+	mux.HandleFunc("GET /xrpc/sh.tangled.git.temp.listBranches", func(w http.ResponseWriter, r *http.Request) {
+		if got := r.URL.Query().Get("repo"); got != "did:plc:owner" {
+			t.Errorf("repo query = %q", got)
+		}
+		_, _ = fmt.Fprint(w, `{"branches":[{"name":"master"}]}`)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	f := New(srv.URL, "", srv.Client())
+	repo, err := f.Repos().Get(context.Background(), "tangled.org", "core")
+	if err != nil {
+		t.Fatalf("Get returned error: %v", err)
+	}
+	if repo.DefaultBranch != "master" {
+		t.Errorf("DefaultBranch = %q", repo.DefaultBranch)
+	}
+	if metadataRequests != 1 {
+		t.Errorf("metadata requests = %d, want 1", metadataRequests)
+	}
+}
+
+func TestRepoGetRejectsOversizedMetadata(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /tangled.org/core", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(strings.Repeat("x", maxRepoHTMLBytes+1)))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	f := New(srv.URL, "", srv.Client())
+	_, err := f.Repos().Get(context.Background(), "tangled.org", "core")
+	if err == nil {
+		t.Fatal("expected oversized metadata error")
+	}
+	if !strings.Contains(err.Error(), "exceeds") {
+		t.Errorf("expected size limit error, got %v", err)
 	}
 }
 

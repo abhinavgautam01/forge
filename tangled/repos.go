@@ -31,7 +31,14 @@ func (s *repoService) Get(ctx context.Context, owner, repo string) (*forges.Repo
 		HasIssues:           true,
 		PullRequestsEnabled: true,
 	}
-	if branches, err := s.f.Branches().List(ctx, owner, repo, forges.ListBranchOpts{Limit: 1}); err == nil && len(branches) > 0 {
+	repoDID := meta.DID
+	if repoDID == "" && strings.HasPrefix(owner, "did:") {
+		repoDID = owner
+	}
+	if repoDID == "" {
+		return result, nil
+	}
+	if branches, err := (&branchService{f: s.f}).list(ctx, repoDID, forges.ListBranchOpts{Limit: 1}); err == nil && len(branches) > 0 {
 		result.DefaultBranch = branches[0].Name
 	}
 	return result, nil

@@ -17,7 +17,10 @@ func (s *branchService) List(ctx context.Context, owner, repo string, opts forge
 	if err != nil {
 		return nil, err
 	}
+	return s.list(ctx, repoDID, opts)
+}
 
+func (s *branchService) list(ctx context.Context, repoDID string, opts forges.ListBranchOpts) ([]forges.Branch, error) {
 	var branches []forges.Branch
 	cursor := ""
 	for {

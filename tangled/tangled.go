@@ -21,6 +21,7 @@ const (
 	xrpcListBranches = "sh.tangled.git.temp.listBranches"
 	xrpcListTags     = "sh.tangled.git.temp.listTags"
 	xrpcGetTree      = "sh.tangled.git.temp.getTree"
+	maxRepoHTMLBytes = 1 << 20
 )
 
 type tangledForge struct {
@@ -154,11 +155,22 @@ func (f *tangledForge) repoMeta(ctx context.Context, owner, repo string) (*repoM
 		return nil, &forges.HTTPError{StatusCode: resp.StatusCode, URL: req.URL.String(), Body: string(body)}
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := readLimited(resp.Body, maxRepoHTMLBytes)
 	if err != nil {
 		return nil, err
 	}
 	return parseRepoMeta(string(body)), nil
+}
+
+func readLimited(r io.Reader, limit int64) ([]byte, error) {
+	body, err := io.ReadAll(io.LimitReader(r, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(body)) > limit {
+		return nil, fmt.Errorf("tangled repository metadata response exceeds %d bytes", limit)
+	}
+	return body, nil
 }
 
 func (f *tangledForge) repoDID(ctx context.Context, owner, repo string) (string, error) {
