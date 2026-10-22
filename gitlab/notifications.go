@@ -52,14 +52,13 @@ func convertGitLabTodo(t *gitlab.Todo) forge.Notification {
 		}
 	}
 
-	// Todos carry no project web URL, but GitLab target pages live under the
-	// project at <project>/-/issues/5, <project>/-/merge_requests/3 and so on.
-	if repoURL, _, ok := strings.Cut(t.TargetURL, "/-/"); ok {
-		result.RepoURL = repoURL
-	}
-
 	if t.Project != nil {
 		result.Repo = t.Project.PathWithNamespace
+		// Todos carry no project web URL, but GitLab target pages live under the
+		// project at <project>/-/issues/5, <project>/-/merge_requests/3 and so on.
+		if repoURL, _, ok := strings.Cut(t.TargetURL, "/-/"); ok {
+			result.RepoURL = repoURL
+		}
 		if result.Title == "" {
 			result.Title = t.Project.Name
 		}
