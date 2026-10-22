@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	forge "github.com/git-pkgs/forge"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -45,6 +46,16 @@ func convertGitLabTodo(t *gitlab.Todo) forge.Notification {
 
 	if t.Target != nil {
 		result.URL = t.TargetURL
+		switch result.SubjectType {
+		case forge.NotificationSubjectIssue, forge.NotificationSubjectPullRequest:
+			result.SubjectNumber = int(t.Target.IID)
+		}
+	}
+
+	// Todos carry no project web URL, but GitLab target pages live under the
+	// project at <project>/-/issues/5, <project>/-/merge_requests/3 and so on.
+	if repoURL, _, ok := strings.Cut(t.TargetURL, "/-/"); ok {
+		result.RepoURL = repoURL
 	}
 
 	if t.Project != nil {
